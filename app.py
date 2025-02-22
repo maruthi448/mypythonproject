@@ -49,7 +49,7 @@ def gitpushtotargeturl():
         # Define Repository and File Paths
         TARGET_REPO_URL = f"https://{GITHUB_USERNAME}:{GITHUB_TOKEN}@github.com/maruthi448/sampleproj.git"
 
-        print (" the target repo is:", TARGET_REPO_URL)
+        #print (" the target repo is:", TARGET_REPO_URL)
         LOCAL_CLONE_DIR = "/Users/maruthikumark/Training/Python_practice/targetgitrepo"
         CONFIG_FILE_NAME = "template.yml"
         Destina_file_path = "/Users/maruthikumark/Training/Python_practice/targetgitrepo/template"
@@ -105,7 +105,7 @@ def gitpushtotargeturl():
         repo.index.commit(COMMIT_MESSAGE)
         origin = repo.remote(name="origin")
         origin.push()
-        print(f"✅ {CONFIG_FILE_NAME} and {DOCKER_FILE_NAME} pushed securely to {TARGET_REPO_URL}")
-        return {"message": f"{CONFIG_FILE_NAME} and {DOCKER_FILE_NAME} to {TARGET_REPO_URL} pushed successfully!"}
+        print(f"✅ {CONFIG_FILE_NAME} and {DOCKER_FILE_NAME} pushed securely to repo")
+        return {"message": f"{CONFIG_FILE_NAME} and {DOCKER_FILE_NAME} to repo pushed successfully!"}
     except Exception as e:
         return {"error": str(e)}
