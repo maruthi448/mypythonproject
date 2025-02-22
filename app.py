@@ -1,7 +1,10 @@
+from fastapi import FastAPI
 import os
-import git
+import  git
 import yaml
 import base64
+import shutil
+
 #from cryptography.fernet import Fernet
 '''
 # Load encryption key
@@ -25,116 +28,84 @@ ENCRYPTED_TOKEN = config["encrypted_token"]
 GITHUB_TOKEN = decrypt_token(ENCRYPTED_TOKEN)
 '''
 
-GITHUB_USERNAME = os.environ["GIT_USERNAME"]
-GITHUB_TOK = os.environ["GIT_TOKEN"]
+app = FastAPI()
 
-GITHUB_TOKEN = base64.b64decode(GITHUB_TOK)
-
-if isinstance(GITHUB_TOKEN, bytes):
-    GITHUB_TOKEN = GITHUB_TOKEN.decode("utf-8")
-
-
-print("the value of token is:", GITHUB_TOKEN)
-# Define Repository and File Paths
-TARGET_REPO_URL = f"https://{GITHUB_USERNAME}:{GITHUB_TOKEN}@github.com/maruthi448/sampleproj.git"
-
-print (" the target repo is:", TARGET_REPO_URL)
-LOCAL_CLONE_DIR = "/Users/maruthikumark/Training/Python_practice"
-CONFIG_FILE_NAME = "template.yml"
-DOCKER_FILE_NAME = "Dockerfile"
-COMMIT_MESSAGE = "Added template.yml"
-
-# Create YAML Configuration File
-yaml_data = {
-    "project": "Secure Git Project",
-    "version": "1.0",
-    "settings": {
-        "debug": True,
-        "log_level": "INFO"
-    }
-}
-
-os.makedirs(LOCAL_CLONE_DIR, exist_ok=True)
-config_file_path = os.path.join(LOCAL_CLONE_DIR, CONFIG_FILE_NAME)
-
-with open(config_file_path, "w") as file:
-    yaml.dump(yaml_data, file, default_flow_style=False)
-
-print("✅ YAML file created.")
-
-# Create Dockerfile
-dockerfile_content = """\
-FROM python:3.9
-
-WORKDIR /app
-COPY template.yml /app/
-
-CMD ["cat", "/app/template.yml"]
-"""
-
-dockerfile_path = os.path.join(LOCAL_CLONE_DIR, DOCKER_FILE_NAME)
-
-with open(dockerfile_path, "w") as file:
-    file.write(dockerfile_content)
-
-print("✅ Dockerfile created.")
-
-# Clone Repository
-repo = git.Repo.clone_from(TARGET_REPO_URL, LOCAL_CLONE_DIR)
-print("✅ Repository cloned successfully.")
-
-# Commit and Push Changes
-repo.index.add([config_file_path, dockerfile_path])
-repo.index.commit(COMMIT_MESSAGE)
-origin = repo.remote(name="origin")
-origin.push()
-
-print(f"✅ {CONFIG_FILE_NAME} and {DOCKER_FILE_NAME} pushed securely to {TARGET_REPO_URL}")
+@app.get("/home")
+def home():
+    print('Welcome to our python dashboard')
+    return{'Welcome to our python dashboard'}
 
 
+@app.get("/gitpushtotargeturl")
+def gitpushtotargeturl():
+    try:
+        GITHUB_USERNAME = os.environ["GIT_USERNAME"]
+        GITHUB_TOK = os.environ["GIT_TOKEN"]
+        GITHUB_TOKEN = base64.b64decode(GITHUB_TOK)
+        if isinstance(GITHUB_TOKEN, bytes):
+            GITHUB_TOKEN = GITHUB_TOKEN.decode("utf-8")
+
+        #print("the value of token is:", GITHUB_TOKEN)
+        # Define Repository and File Paths
+        TARGET_REPO_URL = f"https://{GITHUB_USERNAME}:{GITHUB_TOKEN}@github.com/maruthi448/sampleproj.git"
+
+        print (" the target repo is:", TARGET_REPO_URL)
+        LOCAL_CLONE_DIR = "/Users/maruthikumark/Training/Python_practice/targetgitrepo"
+        CONFIG_FILE_NAME = "template.yml"
+        Destina_file_path = "/Users/maruthikumark/Training/Python_practice/targetgitrepo/template"
+        DOCKER_FILE_NAME = "Dockerfile"
+        COMMIT_MESSAGE = "Added template.yml"
+
+        if os.path.exists(LOCAL_CLONE_DIR):
+
+            shutil.rmtree(LOCAL_CLONE_DIR)
+
+        # Clone Repository
+        repo = git.Repo.clone_from(TARGET_REPO_URL, LOCAL_CLONE_DIR)
+        print("✅ Repository cloned successfully.")
+
+        # Create YAML Configuration File
+        yaml_data = {
+        "project": "Secure Git MY Project",
+        "version": "1.0",
+        "settings": {
+            "debug": True,
+            "log_level": "INFO"
+        }
+        }
 
 
-'''
-import os
-import yaml
-import git 
-#from cryptography.fernet import Fernet
+        os.makedirs(LOCAL_CLONE_DIR, exist_ok=True)
+        config_file_path = os.path.join(Destina_file_path, CONFIG_FILE_NAME)
+        os.makedirs(os.path.dirname(config_file_path), exist_ok=True)
+        with open(config_file_path, "w") as file:
+            yaml.dump(yaml_data, file, default_flow_style=False)
 
-# Configuration
-YML_FILE_NAME = "config.yml"
-TARGET_REPO_URL = "https://id:{pwd}@github.com/maruthi448/sampleproj.git"  # Use SSH or HTTPS
-LOCAL_CLONE_DIR = "/tmp/git_repo"  # Temporary directory to clone repo
-COMMIT_MESSAGE = "Added config.yml via automation"
+        print("✅ YAML file created.")
 
-# YAML Content
-yaml_data = {
-    "name": "MyProject",
-    "version": "1.0.0",
-    "settings": {
-        "debug": True,
-        "logging_level": "INFO"
-    }
-}
+        # Create Dockerfile
+        dockerfile_content = """\
+        FROM python:3.9
 
-# Step 1: Create a YAML File
-os.makedirs(LOCAL_CLONE_DIR, exist_ok=True)
-yml_file_path = os.path.join(LOCAL_CLONE_DIR, YML_FILE_NAME)
+        WORKDIR /app
+        COPY template.yml /app/
 
-with open(yml_file_path, "w") as file:
-    yaml.dump(yaml_data, file, default_flow_style=False)
+        CMD ["cat", "/app/template.yml"]
+        """
 
-print(f" YAML file created at {yml_file_path}")
+        dockerfile_path = os.path.join(Destina_file_path, DOCKER_FILE_NAME)
 
-# Step 2: Clone the Target Repository
-if os.path.exists(LOCAL_CLONE_DIR):
-    repo = git.Repo.clone_from(TARGET_REPO_URL, LOCAL_CLONE_DIR)
-    print("Repository cloned successfully.")
+        with open(dockerfile_path, "w") as file:
+            file.write(dockerfile_content)
 
-# Step 3: Commit and Push Changes
-repo.index.add([yml_file_path])
-repo.index.commit(COMMIT_MESSAGE)
-origin = repo.remote(name="origin")
-origin.push()
+        print("✅ Dockerfile created.")
 
-print(f" {YML_FILE_NAME} pushed to {TARGET_REPO_URL}")
-'''
+        # Commit and Push Changes
+        repo.index.add([config_file_path, dockerfile_path])
+        repo.index.commit(COMMIT_MESSAGE)
+        origin = repo.remote(name="origin")
+        origin.push()
+        print(f"✅ {CONFIG_FILE_NAME} and {DOCKER_FILE_NAME} pushed securely to {TARGET_REPO_URL}")
+        return {"message": f"{CONFIG_FILE_NAME} and {DOCKER_FILE_NAME} to {TARGET_REPO_URL} pushed successfully!"}
+    except Exception as e:
+        return {"error": str(e)}
