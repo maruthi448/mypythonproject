@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  mypythongitpushtarget-app:
+    build: .
+    container_name: mypythongitpushtarget-app
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env  # Loads environment variables from .env file
+    environment:
+        - OPENOBSERVE_URL=http://openobserve:5080
+        - OPENOBSERVE_USER=${OPENOBSERVE_USER}  # Uses value from .env file
+        - OPENOBSERVE_PASSWORD=${OPENOBSERVE_PASSWORD} 
+    networks:
+      - mynetwork
+  
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - mynetwork
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - mynetwork
+      
+  openobserve:
+    image: public.ecr.aws/zinclabs/openobserve:latest
+    container_name: openobserve
+    environment:
+      - ZO_ROOT_USER_EMAIL=${OPENOBSERVE_USER}  # Uses value from .env file
+      - ZO_ROOT_USER_PASSWORD=${OPENOBSERVE_PASSWORD}  # Uses value from .env file
+    ports:
+      - "5080:5080"
+    networks:
+      - mynetwork
+networks:
+  mynetwork:
+    driver: bridge
+
+    
