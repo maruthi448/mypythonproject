@@ -8,8 +8,7 @@ WORKDIR /app
 COPY . /app
 
 #Install dependencies
-RUN pip install --no-cache-dir fastapi uvicorn gitpython pyyaml
-
+RUN pip install --no-cache-dir -r requirements.txt
 # Expose the FastAPI port
 
 EXPOSE 8081

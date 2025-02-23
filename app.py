@@ -1,12 +1,14 @@
 from fastapi import FastAPI
-from prometheus_client import Counter, generate_latest
-from starlette.middleware.base import BaseHTTPMiddleware
+from prometheus_client import generate_latest, Counter, CollectorRegistry, CONTENT_TYPE_LATEST
+from starlette.middleware.base import BaseHTTPMiddleware, Response
+from starlette.responses import Response
 import os
 import  git
 import yaml
 import base64
 import shutil
 import logging
+import requests, json
 
 #from cryptography.fernet import Fernet
 '''
@@ -33,34 +35,53 @@ GITHUB_TOKEN = decrypt_token(ENCRYPTED_TOKEN)
 
 app = FastAPI()
 
-# Define a counter metric
-REQUEST_COUNT = Counter('https_request_total', "Total number of http requests")
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# ✅ Create Prometheus Metrics Registry
+registry = CollectorRegistry()
+REQUEST_COUNT = Counter("http_requests_total", "Total number of HTTP requests", registry=registry)
 
-'''
-Counter is a Prometheus metric type that only increases over time.
-"http_requests_total" → Metric name (used in Prometheus).
-"Total number of HTTP requests" → Description of the metric.
-REQUEST_COUNT.inc() will be used to increment this counter each time an API request is received.
-'''
-@app.middleware("http")
-async def count_requests(request, call_next):
-    REQUEST_COUNT.inc() # Increments the request counter
-    response = await call_next(request) # Passes the request to the next handler
-    return response
+# ✅ Setup Logging
+logger = logging.getLogger("fastapi-service")
+logger.setLevel(logging.INFO)
+
+# ✅ Set OpenObserve Configuration
+OPENOBSERVE_URL = os.getenv("OPENOBSERVE_URL", "http://localhost:5080")
+OPENOBSERVE_USER = os.getenv("OPENOBSERVE_USER", "your-email@example.com")
+OPENOBSERVE_PASSWORD = os.getenv("OPENOBSERVE_PASSWORD", "your-password")
+
+# ✅ OpenObserve Log Forwarder
+class OpenObserveHandler(logging.Handler):
+    def emit(self, record):
+        log_entry = self.format(record)
+        try:
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Basic {OPENOBSERVE_USER}:{OPENOBSERVE_PASSWORD}",
+            }
+            data = {"logs": [json.loads(log_entry)]}
+            requests.post(f"{OPENOBSERVE_URL}/api/default/_json", json=data, headers=headers)
+        except Exception as e:
+            print(f"Failed to send logs to OpenObserve: {e}")
+
+# ✅ Attach OpenObserve Handler
+openobserve_handler = OpenObserveHandler()
+openobserve_handler.setFormatter(logging.Formatter('{"level": "%(levelname)s", "message": "%(message)s"}'))
+logger.addHandler(openobserve_handler)
 
 @app.get("/")
 def read_root():
-    return{"message": "Hello buddy"}
+    REQUEST_COUNT.inc()
+    logger.info("Root endpoint accessed")
+    return {"message": "Hello buddy"}
+
 @app.get("/metrics")
 def metrics():
-    return generate_latest()
+    REQUEST_COUNT.inc()
+    return Response(generate_latest(registry), media_type=CONTENT_TYPE_LATEST)
 
 @app.get("/home")
 def home():
-    print('Welcome to our python dashboard')
-    return{'Welcome to our python dashboard'}
+    logger.info("Welcome to our python dashboard")
+    return {"message": "Welcome to our python dashboard"}
 
 @app.get("/log")
 def log_message():

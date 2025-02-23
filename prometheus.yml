@@ -4,5 +4,7 @@ scrape_configs:
   - job_name: "mypython-gitproject-to-push-target-repo"
     metrics_path: "/metrics"
     static_configs:
-      - targets: ["host.docker.internal:8081"]
-
+      - targets: ["mypythongitpushtarget-app:8081"]
+      #- targets: ["host.docker.internal:8081"] #we use when we have app running local and prometheus in docker
+      #- targets: ["localhost:8081"] 
+      

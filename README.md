@@ -70,6 +70,12 @@ note:
 uvicorn app:app --host 0.0.0.0 --port 8000
 docker run -p 8081:8000 mypython-gitproject-to-push-target-repo
 
+docker run -d --env-file .env -p 8081:8081 mypython-gitproject-to-push-target-repo
+docker logs -f <container_id>  # Check logs interactively
+docker exec -it <container_id> /bin/sh  # Enter the running container
+
+
+
 uvicorn app:app --host 0.0.0.0 --port 8081
 docker run -p 8081:8081 my-project
 
@@ -122,4 +128,50 @@ docker container prune           # Remove stopped containers
 docker inspect <container_id>     # Get details about a container
 docker stats                      # Show live container stats (CPU, RAM, etc.)
 docker top <container_id>          # Display running processes inside a container
+
+
+--------------------------------------------------------------
+
+Manually Running Containers
+If you don't want docker-compose, you can manually start each container:
+
+1️⃣ Run FastAPI Container
+
+docker run -d --name mypython-app -p 8081:8081 \
+  -e OPENOBSERVE_URL=http://localhost:5080 \
+  -e OPENOBSERVE_USER=your-email@example.com \
+  -e OPENOBSERVE_PASSWORD=your-password \
+  mypython-app-image
+
+2️⃣ Run Prometheus Container
+
+docker run -d --name prometheus -p 9090:9090 \
+  -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \
+  prom/prometheus
+3️⃣ Run OpenObserve Container
+docker run -d --name openobserve -p 5080:5080 \
+  -e ZO_ROOT_USER_EMAIL=your-email@example.com \
+  -e ZO_ROOT_USER_PASSWORD=your-password \
+  public.ecr.aws/zinclabs/openobserve:latest
+4️⃣ Manually Connect Containers to the Same Network
+
+docker network create monitoring
+docker network connect monitoring mypython-app
+docker network connect monitoring prometheus
+docker network connect monitoring openobserve
+🔹 Summary: Why Use docker-compose.yml?
+✅ Easier management – Start all services with docker-compose up -d
+✅ Automatic networking – No need to manually link containers
+✅ Environment variables in one place – No long docker run commands
+✅ Persistent storage support – Save Prometheus data easily
+✅ Scalability – Easily add replicas of FastAPI app
+
+
+
+
+
+
+
+
+
 
