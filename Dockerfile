@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir fastapi uvicorn gitpython pyyaml
 
 # Expose the FastAPI port
 
-EXPOSE 8080
+EXPOSE 8081
 
 # Run the FastAPI app
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080", "--reload" ]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8081", "--reload" ]

@@ -1,9 +1,12 @@
 from fastapi import FastAPI
+from prometheus_client import Counter, generate_latest
+from starlette.middleware.base import BaseHTTPMiddleware
 import os
 import  git
 import yaml
 import base64
 import shutil
+import logging
 
 #from cryptography.fernet import Fernet
 '''
@@ -30,10 +33,39 @@ GITHUB_TOKEN = decrypt_token(ENCRYPTED_TOKEN)
 
 app = FastAPI()
 
+# Define a counter metric
+REQUEST_COUNT = Counter('https_request_total', "Total number of http requests")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+'''
+Counter is a Prometheus metric type that only increases over time.
+"http_requests_total" → Metric name (used in Prometheus).
+"Total number of HTTP requests" → Description of the metric.
+REQUEST_COUNT.inc() will be used to increment this counter each time an API request is received.
+'''
+@app.middleware("http")
+async def count_requests(request, call_next):
+    REQUEST_COUNT.inc() # Increments the request counter
+    response = await call_next(request) # Passes the request to the next handler
+    return response
+
+@app.get("/")
+def read_root():
+    return{"message": "Hello buddy"}
+@app.get("/metrics")
+def metrics():
+    return generate_latest()
+
 @app.get("/home")
 def home():
     print('Welcome to our python dashboard')
     return{'Welcome to our python dashboard'}
+
+@app.get("/log")
+def log_message():
+    logger.info("This is a test log message")
+    return {"message": "Log generated"}
 
 
 @app.get("/gitpushtotargeturl")
